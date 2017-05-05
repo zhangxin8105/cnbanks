@@ -23,6 +23,7 @@ $ Usage: cnbanks [command] [options]
 $ Available Commands:
 $ list   [options] List banks
 $ crawl  [options] Crawl data
+$ stop   [options] Stop crawling
 $ search [options] Search banks via name，code，pinyin abbr
 $ See 'cnbanks COMMAND --help' for more information on a specific command
 ```
@@ -37,9 +38,20 @@ $    -h, --help                       Show help
 ```shell
 $ cnbanks crawl --help
 $ Usage: crawl [options]
+$    -d, --daemonize                  Run in daemonize
 $    -f, --force                      Force to crawl data
-$    -p, --page                       From specified page
-$    -t, --type TYPE                  Crawl with specified Bank Type
+$    -p, --pidfile FILE               PID file
+$    -l, --logfile FILE               Log file
+$    -i, --index Integer              From specified page index
+$    -t, --type TYPE                  Crawl with specified Bank Type ID
+$    -h, --help                       Show help
+```
+
+```shell
+$ cnbanks stop --help
+$ Usage: stop [options]
+$    -f, --force                      Force to stop crawling
+$    -p, --pidfile FILE               PID file
 $    -h, --help                       Show help
 ```
 
