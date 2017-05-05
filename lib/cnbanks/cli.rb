@@ -15,6 +15,7 @@ module CNBanks
           Available Commands:
           list   [options] List banks
           crawl  [options] Crawl data
+          stop   [options] Stop crawling
           search [options] Search banks via name，code，pinyin abbr
           See 'cnbanks COMMAND --help' for more information on a specific command
           SEP
@@ -43,6 +44,16 @@ module CNBanks
           end
         end
 
+        cmd_stop_opts_parser = OptionParser.new do |opts|
+          opts.banner = 'Usage: stop [options]'
+          opts.on('-f', '--force', 'Force to stop crawling') { options[:force] = true }
+          opts.on('-p FILE', '--pidfile FILE', 'PID file') { |path| options[:pidfile] = path }
+          opts.on('-h', '--help', 'Show help') do
+            puts opts
+            exit
+          end
+        end
+
         cmd_search_opts_parser = OptionParser.new do |opts|
           opts.banner = 'Usage: search [options]'
           opts.on('-c CODE', '--code CODE', 'Find via Bank Code') { |code| options[:code] = code }
@@ -58,6 +69,7 @@ module CNBanks
         cmd_opts_parsers = {
           list:   cmd_list_opts_parser,
           crawl:  cmd_crawl_opts_parser,
+          stop:   cmd_stop_opts_parser,
           search: cmd_search_opts_parser
         }
 
@@ -82,8 +94,21 @@ module CNBanks
             puts banks.map { |bank| "#{bank.type_id}\t#{bank.name}" }
           end
         when :crawl
-          puts 'Crawling ...'
           CNBanks.crawl options
+        when :stop
+          begin
+            pidfile = options[:pidfile]
+            if File.exists?(pidfile)
+              pid = File.read(pidfile).to_i
+              if options[:force]
+                Process.kill(:KILL, pid)
+              else
+                Process.kill(:INT, pid)
+              end
+            end
+          rescue => e
+            STDOUT.puts e.message
+          end
         when :search
           if options.empty?
             puts opts_parser

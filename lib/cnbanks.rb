@@ -26,20 +26,6 @@ module CNBanks
         daemonize = options.delete :daemonize
         pidfile   = options.delete :pidfile
         logfile   = options.delete :logfile
-
-        if logfile
-          FileUtils.mkdir_p(File.dirname(logfile), mode: 0755)
-          FileUtils.touch logfile
-          File.chmod(0644, logfile)
-          STDERR.reopen(logfile, 'a')
-          STDOUT.reopen(STDERR)
-          STDOUT.sync = STDERR.sync = true
-        else
-          STDERR.reopen('/dev/null', 'a')
-          STDOUT.reopen(STDERR)
-          STDOUT.sync = STDERR.sync = true
-        end
-
         if daemonize
           STDOUT.puts <<-HEREDOC.strip_heredoc
           => Start crawling
@@ -49,10 +35,14 @@ module CNBanks
           if pidfile
             write_pidfile pidfile
           end
+          if logfile
+            redirect_log logfile
+          end
           trap_signals
           loop do
             crawl_banks
             crawl_bank_branches options
+            STDOUT.puts "* Next time at #{Time.now.utc + CRAWL_INTERVAL.seconds}"
             sleep CRAWL_INTERVAL
           end
         else
@@ -155,7 +145,7 @@ module CNBanks
         begin
           FileUtils.mkdir_p(File.dirname(path), mode: 0755)
           File.open(path, ::File::CREAT | ::File::EXCL | ::File::WRONLY) { |f| f.write Process.pid }
-          at_exit { delete_pidfile }
+          at_exit { delete_pidfile path }
         rescue Errno::EEXIST
           check_pid! path
           if (max_retry_time -= 1) > 0
@@ -186,13 +176,22 @@ module CNBanks
           return :dead if pid.zero?
           # Check the process status.
           # The keys and values of {Signal.list} are known signal names and numbers, respectively.
-          Process.kill(0, pid)
+          Process.kill(:EXIT, pid)
           :running
         rescue Errno::ESRCH
           :dead
         rescue Errno::EPERM
           :not_owned
         end
+      end
+
+      def redirect_log(path)
+        FileUtils.mkdir_p(File.dirname(path), mode: 0755)
+        FileUtils.touch path
+        File.chmod(0644, path)
+        STDERR.reopen(path, 'a')
+        STDOUT.reopen(STDERR)
+        STDOUT.sync = STDERR.sync = true
       end
 
   end

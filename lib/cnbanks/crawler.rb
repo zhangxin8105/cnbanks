@@ -28,7 +28,7 @@ module CNBanks
       def crawl_bank_branches(type_id, page = 1, &block)
         with_retry do
           url = Const::SOURCE_URL + '/' + type_id.to_s + '/' + page.to_s + '/'
-          puts url
+          STDOUT.puts url
           res = HTTP.get url
           if res.status.success?
             html      = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
@@ -45,7 +45,7 @@ module CNBanks
               bank[:zipcode] = tr.at_xpath('td[4]').text.strip
               bank[:address] = tr.at_xpath('td[5]').text.strip
               url = Const::SOURCE_URL + '/' + bank[:code] + '/'
-              puts url
+              STDOUT.puts url
               res = HTTP.get url
               if res.status.success?
                 html            = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
@@ -72,7 +72,7 @@ module CNBanks
           begin
             yield
           rescue => e
-            STDERR.puts "#{e.message} (#{e.class})\n" << e.backtrace.join("\n")
+            STDERR.puts e.message << e.backtrace.join("\n")
             if (retry_times += 1) > times
               sleep 0.5 * retry_times
               STDOUT.puts "Oops！retry #{retry_times}."

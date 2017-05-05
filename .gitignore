@@ -12,3 +12,5 @@
 cnbanks.db
 bin/console
 *.gem
+*.log
+*.pid
