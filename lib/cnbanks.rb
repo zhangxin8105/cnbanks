@@ -53,8 +53,8 @@ module CNBanks
           crawl_banks
           crawl_bank_branches options
         end
-      rescue  => e
-        STDERR.puts e.message << e.backtrace.join("\n")
+      rescue => e
+        STDERR.puts e.message + e.backtrace.join("\n")
       end
     end
 

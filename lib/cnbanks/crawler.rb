@@ -72,7 +72,7 @@ module CNBanks
           begin
             yield
           rescue => e
-            STDERR.puts e.message << e.backtrace.join("\n")
+            STDERR.puts e.message + e.backtrace.join("\n")
             if (retry_times += 1) > times
               sleep 0.5 * retry_times
               STDOUT.puts "Oops！retry #{retry_times}."
