@@ -4,7 +4,3 @@ require 'cnbanks'
 CNBanks.migrate
 
 CNBanks::CLI.start ARGV
-
-
-
-
