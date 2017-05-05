@@ -90,23 +90,23 @@ module CNBanks
         next_page    = options.fetch(:index, 1)
         next_page    = 1 if options[:force]
         loop do
-          Crawler.crawl_bank_branches(bank.type_id, next_page) do |data|
-            data[:banks].each do |attrs|
-              branch = BankBranch.find_by_code attrs[:code]
-              if branch
-                branch.update attrs
-              else
-                branch = BankBranch.new attrs
-                branch.save
-              end
-            end
-            bank.update(current_page: next_page)
-            if data[:next_page] && data[:next_page].to_i > next_page
-              next_page = data[:next_page]
-              next
+          data = Crawler.crawl_bank_branches(bank.type_id, next_page)
+          break unless data
+          data[:banks].each do |attrs|
+            branch = BankBranch.find_by_code attrs[:code]
+            if branch
+              branch.update attrs
+            else
+              branch = BankBranch.new attrs
+              branch.save
             end
           end
-          break
+          bank.update(current_page: next_page)
+          if data[:next_page] && data[:next_page].to_i > next_page
+            next_page = data[:next_page]
+          else
+            break
+          end
         end
       end
     end
