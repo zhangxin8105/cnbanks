@@ -42,7 +42,7 @@ module CNBanks
           loop do
             crawl_banks
             crawl_bank_branches options
-            STDOUT.puts "* Next time at #{Time.now.utc + CRAWL_INTERVAL.seconds}"
+            STDOUT.puts "* Next time at #{Time.now.utc + CRAWL_INTERVAL}"
             sleep CRAWL_INTERVAL
           end
         else
@@ -87,7 +87,7 @@ module CNBanks
                      end
 
       banks.each do |bank|
-        next_page    = options.fetch(:index, 1)
+        next_page    = options.fetch(:index, bank.current_page || 1)
         next_page    = 1 if options[:force]
         loop do
           data = Crawler.crawl_bank_branches(bank.type_id, next_page)
