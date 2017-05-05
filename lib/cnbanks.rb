@@ -86,7 +86,7 @@ module CNBanks
                         Bank.all
                      end
 
-      Bank.all.each do |bank|
+      banks.each do |bank|
         next_page    = options.fetch(:index, 1)
         next_page    = 1 if options[:force]
         loop do
