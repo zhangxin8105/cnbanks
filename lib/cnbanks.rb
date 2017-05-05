@@ -89,7 +89,7 @@ module CNBanks
       Bank.all.each do |bank|
         next_page    = options.fetch(:index, 1)
         next_page    = 1 if options[:force]
-        loop
+        loop do
           data = Crawler.crawl_bank_branches(bank.type_id, next_page)
           data[:banks].each do |attrs|
             branch = BankBranch.find_by_code attrs[:code]
