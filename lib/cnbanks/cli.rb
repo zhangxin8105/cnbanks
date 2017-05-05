@@ -31,8 +31,11 @@ module CNBanks
 
         cmd_crawl_opts_parser = OptionParser.new do |opts|
           opts.banner = 'Usage: crawl [options]'
+          opts.on('-d', '--daemonize', 'Run in daemonize') { options[:daemonize] = true }
           opts.on('-f', '--force', 'Force to crawl data') { options[:force] = true }
-          opts.on('-p', '--page', 'From specified page') { |page| options[:page] = page.to_i }
+          opts.on('-p FILE', '--pidfile FILE', 'PID file') { |path| options[:pidfile] = path }
+          opts.on('-l FILE', '--logfile FILE', 'Log file') { |path| options[:logfile] = path }
+          opts.on('-i Integer', '--index Integer', 'From specified page index') { |page| options[:index] = page.to_i }
           opts.on('-t TYPE', '--type TYPE', 'Crawl with specified Bank Type ID') { |type| options[:type] = type }
           opts.on('-h', '--help', 'Show help') do
             puts opts
@@ -67,7 +70,7 @@ module CNBanks
 
         opts_parser = cmd_opts_parsers[cmd]
         opts_parser.parse args
-        
+
         case cmd
         when :list
           banks = CNBanks.banks

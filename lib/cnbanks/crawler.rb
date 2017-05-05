@@ -45,8 +45,8 @@ module CNBanks
               bank[:zipcode] = tr.at_xpath('td[4]').text.strip
               bank[:address] = tr.at_xpath('td[5]').text.strip
               url = Const::SOURCE_URL + '/' + bank[:code] + '/'
-              puts url    
-              res = HTTP.get url     
+              puts url
+              res = HTTP.get url
               if res.status.success?
                 html            = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
                 bank[:province] = html.at_xpath(Const::BANK_PROVINCE_XPATH).text
@@ -54,7 +54,7 @@ module CNBanks
               end
               bank
             end
-            
+
             data = { banks: page_banks, next_page: next_page }
             if block_given?
               yield data
