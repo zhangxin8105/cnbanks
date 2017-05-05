@@ -12,7 +12,8 @@ module CNBanks
       type_id VARCHAR(20),
       name VARCHAR(100),
       pinyin_abbr VARCHAR(30),
-      current_page INTEGER DEFAULT 0
+      current_page INTEGER DEFAULT 0,
+      active INTEGER(4) DEFAULT 1
     );
     CREATE INDEX IF NOT EXISTS index_banks_on_type_id ON banks(type_id);
     CREATE INDEX IF NOT EXISTS index_banks_on_pinyin_abbr ON banks(pinyin_abbr);
@@ -49,7 +50,7 @@ module CNBanks
     SQL
 
     ALL_BANKS_SQL = <<-SQL.strip_heredoc.freeze
-    SELECT id, type_id, name, pinyin_abbr, current_page FROM banks
+    SELECT id, type_id, name, pinyin_abbr, current_page FROM banks WHERE active = 1
     SQL
 
     BANKS_COUNT_SQL = <<-SQL.strip_heredoc.freeze
