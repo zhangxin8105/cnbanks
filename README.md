@@ -8,8 +8,15 @@ gem 'cnbanks'
 
 require 'cnbanks'
 CNBanks.migrate # 第一次执行需要创建数据库
-CNBanks.crawl # 根据最后一条记录开始爬数据
-CNBanks.crawl(force: true) # 从头开始爬数据
+CNBanks.crawl # 开始爬数据
+CNBanks.crawl(
+    :daemonize  => true,
+    :pidfile    => 'cnbanks.pid', 
+    :logfile    => 'cnbanks.log',
+    :type       => '402',
+    :province:  => 'fujian',
+    :city       => 'fuzhou'
+) # 设置后台运行，指定PID文件位置，指定日志文件位置等
 CNBanks.find_by_code '104881005100' # 通过银行行号查询银行信息
 CNBanks.query_by_name '中国银行'     # 通过银行名称查询银行信息
 CNBanks.query_by_pinyin_abbr 'zgyh' # 通过简拼查询银行信息
