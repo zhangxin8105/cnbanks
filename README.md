@@ -21,10 +21,12 @@ CLI:
 $ cnbanks
 $ Usage: cnbanks [command] [options]
 $ Available Commands:
-$ list   [options] List banks
-$ crawl  [options] Crawl data
-$ stop   [options] Stop crawling
-$ search [options] Search banks via name，code，pinyin abbr
+$ list    [options] List banks
+$ disable [options] Disable bank
+$ enable  [options] Enable bank
+$ crawl   [options] Crawl data
+$ stop    [options] Stop crawling
+$ search  [options] Search banks via name，code，pinyin abbr
 $ See 'cnbanks COMMAND --help' for more information on a specific command
 ```
 
@@ -36,14 +38,27 @@ $    -h, --help                       Show help
 ```
 
 ```shell
+$ Usage: disable [options]
+$    -t, --type TYPE_ID               Bank Type ID
+$    -h, --help                       Show help
+```
+
+```shell
+$ Usage: enable [options]
+$    -t, --type TYPE_ID               Bank Type ID
+$    -h, --help                       Show help
+```
+
+```shell
 $ cnbanks crawl --help
 $ Usage: crawl [options]
 $    -d, --daemonize                  Run in daemonize
 $    -f, --force                      Force to crawl data
 $    -p, --pidfile FILE               PID file
 $    -l, --logfile FILE               Log file
-$    -i, --index Integer              From specified page index
-$    -t, --type TYPE                  Crawl with specified Bank Type ID
+$    -T, --type TYPE                  Crawl with specified Bank Type ID
+$    -P, --province-pinyin PINYIN     Crawl with specified province only
+$    -C, --city-pinyin PINYIN         Crawl with specified city only
 $    -h, --help                       Show help
 ```
 

@@ -3,7 +3,7 @@ module CNBanks
   class Bank
 
     def self.column_names
-      %i(id type_id name pinyin_abbr current_page)
+      %i(id type_id name pinyin_abbr active)
     end
 
     def self.find_by_name(name)
@@ -30,14 +30,14 @@ module CNBanks
       end
     end
 
-    attr_accessor :id, :type_id, :name, :pinyin_abbr, :current_page
+    attr_accessor :id, :type_id, :name, :pinyin_abbr, :active
 
     def initialize(options = {})
       @id               = options[:id]
       @type_id          = options[:type_id]
       @name             = options[:name]
       @pinyin_abbr      = options[:pinyin_abbr]
-      @current_page     = options[:current_page]
+      @active           = options[:active].to_i
     end
 
     def [](column)
@@ -54,7 +54,7 @@ module CNBanks
         type_id,
         name,
         pinyin_abbr,
-        current_page
+        active
       )
     end
 
@@ -68,13 +68,13 @@ module CNBanks
         attrs[:type_id],
         attrs[:name],
         attrs[:pinyin_abbr],
-        attrs[:current_page],
+        attrs[:active],
         id
       )
     end
 
     def to_h
-      { id: id, type_id: type_id, name: name, pinyin_abbr: pinyin_abbr }
+      { id: id, type_id: type_id, name: name, pinyin_abbr: pinyin_abbr, active: active }
     end
 
   end

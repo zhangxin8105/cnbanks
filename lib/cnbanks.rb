@@ -68,7 +68,7 @@ module CNBanks
         list.each do |item|
           bank = Bank.find_by_type_id item[:type_id]
           unless bank
-            bank = Bank.new(type_id: item[:type_id], name: item[:name])
+            bank = Bank.new(type_id: item[:type_id], name: item[:name], active: 1)
             bank.save
           else
             bank.update(type_id: item[:type_id], name: item[:name])
@@ -78,36 +78,44 @@ module CNBanks
     end
 
     def crawl_bank_branches(options = {})
-      default_opts = { force: false }
-      options      = default_opts.merge! options
-      banks        = if options[:type]
-                        bank = Bank.find_by_type_id options[:type]
-                        bank ? [bank] : []
-                     else
-                        Bank.all
-                     end
+      banks = if type_id = options[:type]
+                bank = Bank.find_by_type_id type_id
+                bank ? [bank] : []
+              else
+                Bank.all
+              end
 
       banks.each do |bank|
-        next_page    = options.fetch(:index, bank.current_page || 1)
-        next_page    = 1 if options[:force]
-        loop do
-          data = Crawler.crawl_bank_branches(bank.type_id, next_page)
-          break unless data
-          data[:banks].each do |attrs|
-            branch = BankBranch.find_by_code attrs[:code]
-            if branch
-              branch.update attrs
-            else
-              branch = BankBranch.new attrs
-              branch.save
+        Crawler.crawl_bank_regions(bank.type_id) do |regions|
+          regions.each do |province, cities|
+            if options[:province].nil? || province == options[:province]
+              cities.each do |city|
+
+                if options[:city].nil? || city == options[:city]
+                  next_page = 1
+                  loop do
+                    data = Crawler.crawl_bank_branches(bank.type_id, city, next_page)
+                    break unless data
+                    data[:banks].each do |attrs|
+                      branch = BankBranch.find_by_code attrs[:code]
+                      if branch
+                        branch.update attrs
+                      else
+                        branch = BankBranch.new attrs
+                        branch.save
+                      end
+                    end
+                    if data[:next_page] && data[:next_page].to_i > next_page
+                      next_page = data[:next_page]
+                    else
+                      break
+                    end
+                  end # loop
+                end
+
+              end # cities
             end
-          end
-          bank.update(current_page: next_page)
-          if data[:next_page] && data[:next_page].to_i > next_page
-            next_page = data[:next_page]
-          else
-            break
-          end
+          end # regions
         end
       end
     end

@@ -15,10 +15,12 @@ module CNBanks
           opts.banner = 'Usage: cnbanks [command] [options]'
           opts.separator <<-SEP.strip_heredoc
           Available Commands:
-          list   [options] List banks
-          crawl  [options] Crawl data
-          stop   [options] Stop crawling
-          search [options] Search banks via name，code，pinyin abbr
+          list    [options] List banks
+          disable [options] Disable bank
+          enable  [options] Enable bank
+          crawl   [options] Crawl data
+          stop    [options] Stop crawling
+          search  [options] Search banks via name，code，pinyin abbr
           See 'cnbanks COMMAND --help' for more information on a specific command
           SEP
         end
@@ -32,14 +34,33 @@ module CNBanks
           end
         end
 
+        cmd_disable_opts_parser = OptionParser.new do |opts|
+          opts.banner = 'Usage: disable [options]'
+          opts.on('-t TYPE_ID', '--type TYPE_ID', 'Bank Type ID') { |type| options[:type] = type }
+          opts.on('-h', '--help', 'Show help') do
+            puts opts
+            exit
+          end
+        end
+
+        cmd_enable_opts_parser = OptionParser.new do |opts|
+          opts.banner = 'Usage: enable [options]'
+          opts.on('-t TYPE_ID', '--type TYPE_ID', 'Bank Type ID') { |type| options[:type] = type }
+          opts.on('-h', '--help', 'Show help') do
+            puts opts
+            exit
+          end
+        end
+
         cmd_crawl_opts_parser = OptionParser.new do |opts|
           opts.banner = 'Usage: crawl [options]'
           opts.on('-d', '--daemonize', 'Run in daemonize') { options[:daemonize] = true }
           opts.on('-f', '--force', 'Force to crawl data') { options[:force] = true }
           opts.on('-p FILE', '--pidfile FILE', 'PID file') { |path| options[:pidfile] = path }
           opts.on('-l FILE', '--logfile FILE', 'Log file') { |path| options[:logfile] = path }
-          opts.on('-i Integer', '--index Integer', 'From specified page index') { |page| options[:index] = page.to_i }
-          opts.on('-t TYPE', '--type TYPE', 'Crawl with specified Bank Type ID') { |type| options[:type] = type }
+          opts.on('-T TYPE', '--type TYPE', 'Crawl with specified Bank Type ID') { |type| options[:type] = type }
+          opts.on('-P PINYIN', '--province-pinyin PINYIN', 'Crawl with specified province only') { |pinyin| options[:province] = pinyin }
+          opts.on('-C PINYIN', '--city-pinyin PINYIN', 'Crawl with specified city only') { |pinyin| options[:city] = pinyin }
           opts.on('-h', '--help', 'Show help') do
             puts opts
             exit
@@ -70,6 +91,8 @@ module CNBanks
 
         cmd_opts_parsers = {
           list:   cmd_list_opts_parser,
+          disable: cmd_disable_opts_parser,
+          enable: cmd_enable_opts_parser,
           crawl:  cmd_crawl_opts_parser,
           stop:   cmd_stop_opts_parser,
           search: cmd_search_opts_parser
@@ -94,6 +117,24 @@ module CNBanks
           else
             puts "TYPE_ID\tBANK_NAME"
             puts banks.map { |bank| "#{bank.type_id}\t#{bank.name}" }
+          end
+        when :disable
+          unless options.has_key? :type
+            puts opts_parser
+            exit
+          end
+          bank = CNBanks::Bank.find_by_type_id options[:type]
+          if bank
+            bank.update(active: 0)
+          end
+        when :enable
+          unless options.has_key? :type
+            puts opts_parser
+            exit
+          end
+          bank = CNBanks::Bank.find_by_type_id options[:type]
+          if bank
+            bank.update(active: 1)
           end
         when :crawl
           CNBanks.crawl options

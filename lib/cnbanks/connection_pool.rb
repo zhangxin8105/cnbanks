@@ -167,4 +167,4 @@ module CNBanks
       end
 
   end # ConnectionPool
-end # ProxyPump
+end # CNBanks

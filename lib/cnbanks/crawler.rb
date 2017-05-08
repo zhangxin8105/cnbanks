@@ -7,34 +7,60 @@ module CNBanks
 
       def crawl_banks(&block)
         with_retry do
-          res = HTTP.get Const::SOURCE_URL + '/'
+          res = HTTP.get "#{Const::SOURCE_URL}/bank/"
           if res.status.success?
             html = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
-            banks = html.xpath(Const::BANKS_XPATH).map do |node|
-              type_id = node.get('href').gsub(/\A\/bank\/(\d+\w+)\/?/) { $1 }
+            data = html.xpath(Const::BANKS_XPATH).map do |node|
+              type_id = node.get('href')[/\A\/bank\/(\d+\w+)\/?/, 1]
               name = node.text.strip
               { type_id: type_id, name: name }
             end
-            if block_given?
-              yield banks
-            else
-              banks
+            block_given? ? yield(data) : data
+          end
+        end
+      end
+
+      def crawl_bank_regions(type_id, &block)
+        with_retry do
+          url = "#{Const::SOURCE_URL}/bank/#{type_id}/"
+          STDOUT.puts url
+          res = HTTP.get url
+          if res.status.success?
+            html = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
+            data = html.xpath(Const::PROVINCE_XPATH).inject({}) do |data, province|
+              path = province.get('href')
+              key  = path[/\A\/bank\/\w+\/([A-Za-z]+)\/?/, 1]
+              data[key] ||= []
+              url  = "#{Const::SOURCE_URL}#{path}"
+              puts url
+              res  = HTTP.get url
+              if res.status.success?
+                subhtml = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
+                subhtml.xpath(Const::CITY_XPATH).each do |city|
+                  href = city.get('href')
+                  item = href[/\A\/bank\/\w+\/([A-Za-z]+)\/?/, 1]
+                  data[key] << item
+                end
+              end
+              data
             end
+            block_given? ? yield(data) : data
           end
         end
       end
 
       # 获取银行分行数据
-      def crawl_bank_branches(type_id, page = 1, &block)
+      def crawl_bank_branches(type_id, city, page = 1, &block)
         with_retry do
-          url = Const::SOURCE_URL + '/' + type_id.to_s + '/' + page.to_s + '/'
+          url = "#{Const::SOURCE_URL}/bank/#{type_id}/#{city}/#{page}/"
           STDOUT.puts url
           res = HTTP.get url
           if res.status.success?
-            html      = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
+            html = Oga.parse_html(res.to_s.force_encoding(Encoding::UTF_8))
+            res  = HTTP.get url
             next_page = html.at_xpath Const::NEXT_PAGE_XPATH
             if next_page
-              next_page = next_page.get('href').gsub(/\A\/bank\/\w+\/(\d+)\/?/) { $1 }
+              next_page = next_page.get('href')[/\A\/bank\/\w+\/\w+\/(\d+)\/?/, 1]
               next_page = next_page.to_i
             end
             page_banks = html.xpath(Const::ENTRY_XPATH).map do |tr|
@@ -44,7 +70,7 @@ module CNBanks
               bank[:tel]     = tr.at_xpath('td[3]').text.strip
               bank[:zipcode] = tr.at_xpath('td[4]').text.strip
               bank[:address] = tr.at_xpath('td[5]').text.strip
-              url = Const::SOURCE_URL + '/' + bank[:code] + '/'
+              url = "#{Const::SOURCE_URL}/bank/#{bank[:code]}/"
               STDOUT.puts url
               res = HTTP.get url
               if res.status.success?
@@ -56,11 +82,7 @@ module CNBanks
             end
 
             data = { banks: page_banks, next_page: next_page }
-            if block_given?
-              yield data
-            else
-              data
-            end
+            block_given? ? yield(data) : data
           end
         end
       end
@@ -84,4 +106,4 @@ module CNBanks
     end # ClassMethods
 
   end # Crawler
-end # ChinaBanks
+end # CNBanks

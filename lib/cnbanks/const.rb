@@ -1,6 +1,8 @@
 module CNBanks
   module Const
-    SOURCE_URL           = 'http://5cm.cn/bank'.freeze
+    SOURCE_URL           = 'http://5cm.cn'.freeze
+    PROVINCE_XPATH       = '//html/body/div[2]/div/div[1]/div[1]/ul[1]/li/a'.freeze
+    CITY_XPATH           = '//html/body/div[2]/div/div[1]/div[1]/ul[2]/li/a'.freeze
     BANKS_XPATH          = '//html/body/div[2]/div/div[2]/div/ul/li/a'.freeze
     ENTRY_XPATH          = '//html/body/div[2]/div/div[1]/div[2]/table/tr[position() > 1]'.freeze
     BANK_PROVINCE_XPATH  = '//html/body/div[2]/div/div[1]/table/tr[1]/td[2]/a'.freeze
@@ -12,7 +14,6 @@ module CNBanks
       type_id VARCHAR(20),
       name VARCHAR(100),
       pinyin_abbr VARCHAR(30),
-      current_page INTEGER DEFAULT 0,
       active INTEGER(4) DEFAULT 1
     );
     CREATE INDEX IF NOT EXISTS index_banks_on_type_id ON banks(type_id);
@@ -24,7 +25,6 @@ module CNBanks
       code VARCHAR(50),
       name VARCHAR(100),
       pinyin_abbr VARCHAR(50),
-      tel VARCHAR(30),
       province VARCHAR(30),
       province_pinyin VARCHAR(50),
       province_pinyin_abbr VARCHAR(20),
@@ -32,6 +32,7 @@ module CNBanks
       city_pinyin VARCHAR(50),
       city_pinyin_abbr VARCHAR(20),
       address VARCHAR(200),
+      tel VARCHAR(30),
       zipcode VARCHAR(10),
       FOREIGN KEY(type_id) REFERENCES banks(type_id)
     );
@@ -41,16 +42,8 @@ module CNBanks
     CREATE INDEX IF NOT EXISTS index_bank_branches_on_city_pinyin_abbr ON bank_branches(city_pinyin_abbr);
     SQL
 
-    BACKUP_BANKS_TABLE_SQL = <<-SQL.strip_heredoc.freeze
-    ALTER TABLE banks RENAME TO banks_bak
-    SQL
-
-    BACKUP_BANK_BRANCHES_TABLE_SQL = <<-SQL.strip_heredoc.freeze
-    ALTER TABLE bank_branches RENAME TO bank_branches_bak
-    SQL
-
     ALL_BANKS_SQL = <<-SQL.strip_heredoc.freeze
-    SELECT id, type_id, name, pinyin_abbr, current_page FROM banks WHERE active = 1
+    SELECT id, type_id, name, pinyin_abbr, active FROM banks WHERE active = 1
     SQL
 
     BANKS_COUNT_SQL = <<-SQL.strip_heredoc.freeze
@@ -58,19 +51,19 @@ module CNBanks
     SQL
 
     INERT_BANK_SQL = <<-SQL.strip_heredoc.freeze
-    INSERT INTO banks(type_id, name, pinyin_abbr, current_page) VALUES(?, ?, ?, ?)
+    INSERT INTO banks(type_id, name, pinyin_abbr, active) VALUES(?, ?, ?, ?)
     SQL
 
     UPDATE_BANK_SQL = <<-SQL.strip_heredoc.freeze
-    UPDATE banks SET type_id = ?, name = ?, pinyin_abbr = ?, current_page = ? WHERE id = ?
+    UPDATE banks SET type_id = ?, name = ?, pinyin_abbr = ?, active = ? WHERE id = ?
     SQL
 
     FIND_BANK_BY_NAME_SQL = <<-SQL.strip_heredoc.freeze
-    SELECT id, type_id, name, pinyin_abbr, current_page FROM banks WHERE name = ?
+    SELECT id, type_id, name, pinyin_abbr, active FROM banks WHERE name = ?
     SQL
 
     FIND_BANK_BY_TYPE_ID_SQL = <<-SQL.strip_heredoc.freeze
-    SELECT id, type_id, name, pinyin_abbr, current_page FROM banks WHERE type_id = ?
+    SELECT id, type_id, name, pinyin_abbr, active FROM banks WHERE type_id = ?
     SQL
 
     BANK_BRANCHES_COUNT_SQL = <<-SQL.strip_heredoc.freeze
