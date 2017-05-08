@@ -66,6 +66,7 @@ $    -l, --logfile FILE               Log file
 $    -T, --type TYPE                  Crawl with specified Bank Type ID
 $    -P, --province-pinyin PINYIN     Crawl with specified province only
 $    -C, --city-pinyin PINYIN         Crawl with specified city only
+$    -I, --interval SECONDS           Interval
 $    -h, --help                       Show help
 ```
 

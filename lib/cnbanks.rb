@@ -10,7 +10,7 @@ require 'cnbanks/bank_branch'
 require 'cnbanks/cli'
 module CNBanks
 
-  CRAWL_INTERVAL = 7*24*60*60.freeze
+  CRAWL_INTERVAL = 30*24*60*60.freeze # 1 month
 
   class << self
 
@@ -47,11 +47,13 @@ module CNBanks
 
         trap_signals
 
+        interval = options.fetch(:interval, CRAWL_INTERVAL)
+
         loop do
           crawl_banks
           crawl_bank_branches options
-          STDOUT.puts "* Next time at #{Time.now.utc + CRAWL_INTERVAL}"
-          sleep CRAWL_INTERVAL
+          STDOUT.puts "* Next time at #{Time.now.utc + interval}"
+          sleep interval
         end
 
       rescue => e

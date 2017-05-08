@@ -61,6 +61,7 @@ module CNBanks
           opts.on('-T TYPE', '--type TYPE', 'Crawl with specified Bank Type ID') { |type| options[:type] = type }
           opts.on('-P PINYIN', '--province-pinyin PINYIN', 'Crawl with specified province only') { |pinyin| options[:province] = pinyin }
           opts.on('-C PINYIN', '--city-pinyin PINYIN', 'Crawl with specified city only') { |pinyin| options[:city] = pinyin }
+          opts.on('-I SECONDS', '--interval SECONDS', 'Interval') { |interval| options[:interval] = interval.to_i }
           opts.on('-h', '--help', 'Show help') do
             puts opts
             exit
