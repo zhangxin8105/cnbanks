@@ -7,6 +7,8 @@ module CNBanks
     class << self
 
       def start(args)
+        CNBanks.migrate
+
         options = {}
 
         global_opts_parser = OptionParser.new do |opts|

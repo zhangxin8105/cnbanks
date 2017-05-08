@@ -1,3 +1,4 @@
+require 'fileutils'
 require 'ruby-pinyin'
 require 'core_ext/string'
 require 'cnbanks/version'
@@ -23,36 +24,36 @@ module CNBanks
 
     def crawl(options = {})
       begin
-        daemonize = options.delete :daemonize
-        pidfile   = options.delete :pidfile
-        logfile   = options.delete :logfile
-        if daemonize
+        if options.delete(:daemonize)
           STDOUT.puts <<-HEREDOC.strip_heredoc
           => Start crawling
           * Daemonizing...
           HEREDOC
-          Process.daemon true
-          if pidfile
-            write_pidfile pidfile
-          end
-          if logfile
-            redirect_log logfile
-          end
-          trap_signals
-          loop do
-            crawl_banks
-            crawl_bank_branches options
-            STDOUT.puts "* Next time at #{Time.now.utc + CRAWL_INTERVAL}"
-            sleep CRAWL_INTERVAL
-          end
+          daemonize
         else
           STDOUT.puts <<-HEREDOC.strip_heredoc
           => Start crawling
           * Use Ctrl-C to stop
           HEREDOC
+        end
+
+        if pidfile = options.delete(:pidfile)
+          write_pidfile pidfile
+        end
+
+        if logfile = options.delete(:logfile)
+          redirect_log logfile
+        end
+
+        trap_signals
+
+        loop do
           crawl_banks
           crawl_bank_branches options
+          STDOUT.puts "* Next time at #{Time.now.utc + CRAWL_INTERVAL}"
+          sleep CRAWL_INTERVAL
         end
+
       rescue => e
         STDERR.puts e.message + e.backtrace.join("\n")
       end
@@ -128,6 +129,10 @@ module CNBanks
     end
 
     private
+
+      def daemonize
+        Process.daemon true
+      end
 
       def trap_signals
         # Gracefully shutdown
