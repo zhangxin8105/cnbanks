@@ -102,6 +102,6 @@ module CNBanks
 
     INSERT_MEMORY_SQL = 'INSERT INTO memories(type_id, province_pinyin, city_pinyin, page) VALUES(?, ?, ?, ?)'.freeze
 
-    UPADTE_MEMORY_SQL = 'UPDATE memories SET type_id = ?, province_pinyin = ?, city_pinyin = ?, page = ? WHERE id = ?'.freeze
+    UPDATE_MEMORY_SQL = 'UPDATE memories SET type_id = ?, province_pinyin = ?, city_pinyin = ?, page = ? WHERE id = ?'.freeze
   end
 end
