@@ -29,7 +29,7 @@ module CNBanks
 
     def save
       CNBanks.db.execute(
-        Const::INERT_MEMORY_SQL,
+        Const::INSERT_MEMORY_SQL,
         type_id,
         province_pinyin,
         city_pinyin,
