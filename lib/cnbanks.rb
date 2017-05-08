@@ -7,6 +7,7 @@ require 'cnbanks/database'
 require 'cnbanks/crawler'
 require 'cnbanks/bank'
 require 'cnbanks/bank_branch'
+require 'cnbanks/memory'
 require 'cnbanks/cli'
 module CNBanks
 
@@ -86,7 +87,7 @@ module CNBanks
               else
                 Bank.all
               end
-
+      force = !!options[:force]
       banks.each do |bank|
         Crawler.crawl_bank_regions(bank.type_id) do |regions|
           regions.each do |province, cities|
@@ -94,10 +95,24 @@ module CNBanks
               cities.each do |city|
 
                 if options[:city].nil? || city == options[:city]
-                  next_page = 1
+                  memory = CNBanks::Memory.find(bank.type_id, province, city)
+                  unless memory
+                    memory = CNBanks::Memory.new(
+                      type_id: bank.type_id,
+                      province_pinyin: province,
+                      city_pinyin: city,
+                      page: 1
+                    )
+                    memory.save
+                    memory = CNBanks::Memory.find(bank.type_id, province, city)
+                  end
+                  next_page = force ? 1 : memory.page
                   loop do
                     data = Crawler.crawl_bank_branches(bank.type_id, city, next_page)
-                    break unless data
+                    unless data
+                      memory = nil
+                      break
+                    end
                     data[:banks].each do |attrs|
                       branch = BankBranch.find_by_code attrs[:code]
                       if branch
@@ -109,7 +124,9 @@ module CNBanks
                     end
                     if data[:next_page] && data[:next_page].to_i > next_page
                       next_page = data[:next_page]
+                      memory.update(page: next_page)
                     else
+                      memory = nil
                       break
                     end
                   end # loop

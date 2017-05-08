@@ -40,6 +40,14 @@ module CNBanks
     CREATE INDEX IF NOT EXISTS index_bank_branches_on_pinyin_abbr ON bank_branches(pinyin_abbr);
     CREATE INDEX IF NOT EXISTS index_bank_branches_on_province_pinyin_abbr ON bank_branches(province_pinyin_abbr);
     CREATE INDEX IF NOT EXISTS index_bank_branches_on_city_pinyin_abbr ON bank_branches(city_pinyin_abbr);
+
+    CREATE TABLE IF NOT EXISTS memories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type_id VARCHAR(20),
+      province_pinyin VARCHAR(50),
+      city_pinyin VARCHAR(50),
+      page INTEGER DEFAULT 1
+    );
     SQL
 
     ALL_BANKS_SQL = <<-SQL.strip_heredoc.freeze
@@ -90,5 +98,10 @@ module CNBanks
     SELECT id, type_id, code, name, pinyin_abbr, province, province_pinyin, province_pinyin_abbr, city, city_pinyin, city_pinyin_abbr, address, tel, zipcode FROM bank_branches WHERE name LIKE ?
     SQL
 
+    FIND_MEMORY_SQL = 'SELECT id, type_id, province_pinyin, city_pinyin, page FROM memories WHERE type_id = ? AND province_pinyin = ? AND city_pinyin = ?'.freeze
+
+    INSERT_MEMORY_SQL = 'INSERT INTO memories(type_id, province_pinyin, city_pinyin, page) VALUES(?, ?, ?, ?)'.freeze
+
+    UPADTE_MEMORY_SQL = 'UPDATE memories SET type_id = ?, province_pinyin = ?, city_pinyin = ?, page = ? WHERE id = ?'.freeze
   end
 end
