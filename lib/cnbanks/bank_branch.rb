@@ -6,9 +6,8 @@ module CNBanks
       %i(id type_id code name pinyin_abbr province province_pinyin province_pinyin_abbr city city_pinyin city_pinyin_abbr address tel zipcode)
     end
 
-    def self.find_by_code(code)
-      row = CNBanks.db.execute(Const::FIND_BANK_BRANCH_BY_CODE_SQL, code).first
-      orm row
+    def self.query_by_code(code)
+      CNBanks.db.execute(Const::FIND_BANK_BRANCH_BY_CODE_SQL, code).map { |row| orm row }
     end
 
     def self.query_by_pinyin_abbr(abbr)
@@ -17,6 +16,11 @@ module CNBanks
 
     def self.query_by_name(bank_name)
       CNBanks.db.execute(Const::QUERY_BANK_BRANCHES_BY_NAME_SQL, "%#{bank_name}%").map { |row| orm row }
+    end
+
+    def self.find_uniq(code, bank_name)
+      row = CNBanks.db.execute(Const::FIND_UNIQ_BANK_SQL, code, bank_name).first
+      orm row
     end
 
     def self.count
@@ -85,9 +89,9 @@ module CNBanks
         attrs[:city_pinyin_abbr]     ||= attrs[:city].pinyin_abbr
       end
       CNBanks.db.execute(
-        Const::UPDATE_BANK_BRANCH_SQL, 
+        Const::UPDATE_BANK_BRANCH_SQL,
         attrs[:type_id], attrs[:code], attrs[:name], attrs[:pinyin_abbr],
-        attrs[:province], attrs[:province_pinyin], attrs[:province_pinyin_abbr],  
+        attrs[:province], attrs[:province_pinyin], attrs[:province_pinyin_abbr],
         attrs[:city], attrs[:city_pinyin], attrs[:city_pinyin_abbr],
         attrs[:address], attrs[:tel], attrs[:zipcode],
         id
@@ -95,9 +99,9 @@ module CNBanks
     end
 
     def to_h
-      { 
-        id: id, type_id: type_id, code: code,  name: name, pinyin_abbr: pinyin_abbr, 
-        province: province, province_pinyin: province_pinyin, province_pinyin_abbr: province_pinyin_abbr, 
+      {
+        id: id, type_id: type_id, code: code,  name: name, pinyin_abbr: pinyin_abbr,
+        province: province, province_pinyin: province_pinyin, province_pinyin_abbr: province_pinyin_abbr,
         city: city, city_pinyin: city_pinyin, city_pinyin_abbr: city_pinyin_abbr,
         address: address, tel: tel, zipcode: zipcode
       }

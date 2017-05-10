@@ -24,6 +24,22 @@ module CNBanks
       db.execute_batch Const::MIGRATE_SQL
     end
 
+    def banks
+      Bank.all
+    end
+
+    def query_by_pinyin_abbr(abbr)
+      BankBranch.query_by_pinyin_abbr abbr
+    end
+
+    def query_by_code(code)
+      BankBranch.query_by_code code
+    end
+
+    def query_by_name(bank_name)
+      BankBranch.query_by_name bank_name
+    end
+
     def crawl(options = {})
       begin
         if options.delete(:daemonize)
@@ -51,10 +67,11 @@ module CNBanks
 
         interval = options.fetch(:interval, CRAWL_INTERVAL)
 
+        STDOUT.puts "==> Start crawling at #{Time.now.utc}"
         loop do
           crawl_banks
           crawl_bank_branches options
-          STDOUT.puts "* Next time at #{Time.now.utc + interval}"
+          STDOUT.puts "==> Next time at #{Time.now.utc + interval}"
           sleep interval
         end
 
@@ -89,8 +106,8 @@ module CNBanks
                 Bank.all
               end
       force = !!options[:force]
-      @workers = hire_workers(Integer(options.fetch(:threads, 5)))
-      puts "Use threads min: #{@workers.min}, max: #{@workers.max}"
+      @tp = init_threads_pool(Integer(options.fetch(:threads, 5)))
+      puts "Use threads min: #{@tp.min}, max: #{@tp.max}"
       banks.each do |bank|
         Crawler.crawl_bank_regions(bank.type_id) do |regions|
           regions.each do |province, cities|
@@ -98,7 +115,7 @@ module CNBanks
               cities.each do |city|
 
                 if options[:city].nil? || city == options[:city]
-                  @workers.schedule(bank.type_id, province, city) do |type_id, province_pinyin, city_pinyin|
+                  @tp.schedule(bank.type_id, province, city) do |type_id, province_pinyin, city_pinyin|
                     memory = CNBanks::Memory.find(type_id, province_pinyin, city_pinyin)
                     unless memory
                       memory = CNBanks::Memory.new(
@@ -113,7 +130,7 @@ module CNBanks
                     current_page = force ? 1 : memory.page
                     loop do
                       next_page = Crawler.crawl_bank_branches(type_id, city_pinyin, current_page) do |attrs|
-                        branch  = BankBranch.find_by_code attrs[:code]
+                        branch  = BankBranch.find_uniq(attrs[:code], attrs[:name])
                         if branch
                           branch.update attrs
                         else
@@ -138,22 +155,6 @@ module CNBanks
           end # regions
         end
       end
-    end
-
-    def banks
-      CNBanks::Bank.all
-    end
-
-    def query_by_pinyin_abbr(abbr)
-      CNBanks::BankBranch.query_by_pinyin_abbr abbr
-    end
-
-    def find_by_code(code)
-      CNBanks::BankBranch.find_by_code code
-    end
-
-    def query_by_name(bank_name)
-      CNBanks::BankBranch.query_by_name bank_name
     end
 
     private
@@ -226,17 +227,17 @@ module CNBanks
         STDOUT.sync = STDERR.sync = true
       end
 
-      def hire_workers(max_count)
-        workers ||= ThreadPool.new(1, max_count)
-        workers.auto_cutdown!
-        workers.auto_cleanup!
-        workers
+      def init_threads_pool(max_count)
+        pool ||= ThreadPool.new(1, max_count)
+        pool.auto_cutdown!
+        pool.auto_cleanup!
+        pool
       end
 
   end
 end
 
 at_exit do
- @db.shutdown      if @db
- @workers.shutdown if @workers
+ @db.shutdown if @db
+ @tp.shutdown if @tp
 end

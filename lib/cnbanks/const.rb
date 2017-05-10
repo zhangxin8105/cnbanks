@@ -86,6 +86,10 @@ module CNBanks
     UPDATE bank_branches SET type_id = ?, code = ?, name = ?, pinyin_abbr = ?, province = ?, province_pinyin = ?, province_pinyin_abbr = ?, city = ?, city_pinyin = ?, city_pinyin_abbr = ?, address = ?, tel = ?, zipcode = ? WHERE id = ?
     SQL
 
+    FIND_UNIQ_BANK_SQL = <<-SQL.strip_heredoc.freeze
+    SELECT id, type_id, code, name, pinyin_abbr, province, province_pinyin, province_pinyin_abbr, city, city_pinyin, city_pinyin_abbr, address, tel, zipcode FROM bank_branches WHERE code = ? AND name = ?
+    SQL
+
     FIND_BANK_BRANCH_BY_CODE_SQL = <<-SQL.strip_heredoc.freeze
     SELECT id, type_id, code, name, pinyin_abbr, province, province_pinyin, province_pinyin_abbr, city, city_pinyin, city_pinyin_abbr, address, tel, zipcode FROM bank_branches WHERE code = ?
     SQL
