@@ -63,7 +63,7 @@ module CNBanks
               next_page = next_page.get('href')[/\A\/bank\/\w+\/\w+\/(\d+)\/?/, 1]
               next_page = next_page.to_i
             end
-            page_banks = html.xpath(Const::ENTRY_XPATH).map do |tr|
+            html.xpath(Const::ENTRY_XPATH).each do |tr|
               bank           = { type_id: type_id }
               bank[:code]    = tr.at_xpath('td[1]').text.strip
               bank[:name]    = tr.at_xpath('td[2]/a').text.strip
@@ -78,11 +78,9 @@ module CNBanks
                 bank[:province] = html.at_xpath(Const::BANK_PROVINCE_XPATH).text
                 bank[:city]     = html.at_xpath(Const::BANK_CITY_XPATH).text
               end
-              bank
+              yield bank
             end
-
-            data = { banks: page_banks, next_page: next_page }
-            block_given? ? yield(data) : data
+            next_page
           end
         end
       end

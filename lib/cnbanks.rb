@@ -8,6 +8,7 @@ require 'cnbanks/crawler'
 require 'cnbanks/bank'
 require 'cnbanks/bank_branch'
 require 'cnbanks/memory'
+require 'cnbanks/thread_pool'
 require 'cnbanks/cli'
 module CNBanks
 
@@ -88,6 +89,8 @@ module CNBanks
                 Bank.all
               end
       force = !!options[:force]
+      @workers = hire_workers(Integer(options.fetch(:threads, 5)))
+      puts "Use threads min: #{@workers.min}, max: #{@workers.max}"
       banks.each do |bank|
         Crawler.crawl_bank_regions(bank.type_id) do |regions|
           regions.each do |province, cities|
@@ -95,41 +98,39 @@ module CNBanks
               cities.each do |city|
 
                 if options[:city].nil? || city == options[:city]
-                  memory = CNBanks::Memory.find(bank.type_id, province, city)
-                  unless memory
-                    memory = CNBanks::Memory.new(
-                      type_id: bank.type_id,
-                      province_pinyin: province,
-                      city_pinyin: city,
-                      page: 1
-                    )
-                    memory.save
-                    memory = CNBanks::Memory.find(bank.type_id, province, city)
-                  end
-                  next_page = force ? 1 : memory.page
-                  loop do
-                    data = Crawler.crawl_bank_branches(bank.type_id, city, next_page)
-                    unless data
-                      memory = nil
-                      break
+                  @workers.schedule(bank.type_id, province, city) do |type_id, province_pinyin, city_pinyin|
+                    memory = CNBanks::Memory.find(type_id, province_pinyin, city_pinyin)
+                    unless memory
+                      memory = CNBanks::Memory.new(
+                        type_id: type_id,
+                        province_pinyin: province_pinyin,
+                        city_pinyin: city_pinyin,
+                        page: 1
+                      )
+                      memory.save
+                      memory = CNBanks::Memory.find(type_id, province_pinyin, city_pinyin)
                     end
-                    data[:banks].each do |attrs|
-                      branch = BankBranch.find_by_code attrs[:code]
-                      if branch
-                        branch.update attrs
-                      else
-                        branch = BankBranch.new attrs
-                        branch.save
+                    current_page = force ? 1 : memory.page
+                    loop do
+                      next_page = Crawler.crawl_bank_branches(type_id, city_pinyin, current_page) do |attrs|
+                        branch  = BankBranch.find_by_code attrs[:code]
+                        if branch
+                          branch.update attrs
+                        else
+                          branch = BankBranch.new attrs
+                          branch.save
+                        end
+                        branch = nil
                       end
-                    end
-                    if data[:next_page] && data[:next_page].to_i > next_page
-                      next_page = data[:next_page]
-                      memory.update(page: next_page)
-                    else
-                      memory = nil
-                      break
-                    end
-                  end # loop
+                      if next_page && next_page.to_i > current_page
+                        current_page = next_page
+                        memory.update(page: current_page)
+                      else
+                        memory = nil
+                        break
+                      end
+                    end # loop
+                  end
                 end
 
               end # cities
@@ -225,7 +226,17 @@ module CNBanks
         STDOUT.sync = STDERR.sync = true
       end
 
+      def hire_workers(max_count)
+        workers ||= ThreadPool.new(1, max_count)
+        workers.auto_cutdown!
+        workers.auto_cleanup!
+        workers
+      end
+
   end
 end
 
-at_exit { CNBanks.db.shutdown }
+at_exit do
+ @db.shutdown      if @db
+ @workers.shutdown if @workers
+end

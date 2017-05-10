@@ -56,6 +56,7 @@ module CNBanks
           opts.banner = 'Usage: crawl [options]'
           opts.on('-d', '--daemonize', 'Run in daemonize') { options[:daemonize] = true }
           opts.on('-f', '--force', 'Force to crawl data') { options[:force] = true }
+          opts.on('-t Integer', '--threads Integer', 'Max threads count') { |count| options[:threads] = count.to_i }
           opts.on('-p FILE', '--pidfile FILE', 'PID file') { |path| options[:pidfile] = path }
           opts.on('-l FILE', '--logfile FILE', 'Log file') { |path| options[:logfile] = path }
           opts.on('-T TYPE', '--type TYPE', 'Crawl with specified Bank Type ID') { |type| options[:type] = type }

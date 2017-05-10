@@ -63,6 +63,7 @@ $    -d, --daemonize                  Run in daemonize
 $    -f, --force                      Force to crawl data
 $    -p, --pidfile FILE               PID file
 $    -l, --logfile FILE               Log file
+$    -t, --threads Integer            Max threads count
 $    -T, --type TYPE                  Crawl with specified Bank Type ID
 $    -P, --province-pinyin PINYIN     Crawl with specified province only
 $    -C, --city-pinyin PINYIN         Crawl with specified city only
